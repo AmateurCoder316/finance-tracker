@@ -60,7 +60,7 @@ export function BillsPage() {
   const [category,setCategory]=useState('Subscriptions'),[account,setAccount]=useState(''),[note,setNote]=useState('')
   const open=(b:Bill|null)=>{setEditing(b);setName(b?.name||'');setRaw(b?inputAmount(b.amount):'');setNext(b?.nextDate||day());setInterval(b?.interval||'monthly');setCategory(b?.category||'Subscriptions');setAccount(b?.accountId||data.accounts[0]?.id||'');setNote(b?.note||'')}
   const save=(e:React.FormEvent)=>{e.preventDefault();if(!name.trim()||toCents(raw)<=0||!account)return
-    const b:Bill={id:editing?.id||uid(),name:name.trim(),amount:toCents(raw),nextDate:next,interval,category,accountId:account,note,status:editing?.status||'active',payments:editing?.payments||[]}
+    const b:Bill={id:editing?.id||uid(),name:name.trim(),amount:toCents(raw),nextDate:next,interval,category,accountId:account,note,dueDay:Number(next.split('-')[2]),status:editing?.status||'active',payments:editing?.payments||[]}
     mutate(d=>({...d,bills:editing?d.bills.map(x=>x.id===editing.id?b:x):[...d.bills,b]}));setEditing(undefined)
   }
   const pay=(b:Bill)=>{
@@ -69,7 +69,7 @@ export function BillsPage() {
     mutate(d=>({
       ...d,
       transactions:[{id:uid(),type:'expense',accountId:b.accountId,amount:b.amount,category:b.category,date:paidDate,merchant:b.name,note:'Bill payment for '+b.nextDate,tags:['bill'],status:'posted',createdAt:new Date().toISOString()},...d.transactions],
-      bills:d.bills.map(x=>x.id===b.id?{...x,nextDate:nextBillDate(x.nextDate,x.interval),status:x.interval==='once'?'cancelled':x.status,payments:[...x.payments,paidDate]}:x)
+      bills:d.bills.map(x=>x.id===b.id?{...x,nextDate:nextBillDate(x.nextDate,x.interval,x.dueDay),status:x.interval==='once'?'cancelled':x.status,payments:[...x.payments,paidDate]}:x)
     }))
   }
   const active=[...data.bills].filter(b=>b.status==='active').sort((a,b)=>a.nextDate.localeCompare(b.nextDate))

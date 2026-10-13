@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Archive, Download, Plus, Search, SlidersHorizontal, Upload, Wallet, Pencil } from 'lucide-react'
 import type { Account, AccountType, Transaction, TransactionType } from './types'
 import { day, uid } from './data'
-import { accountBalance, amount, baseValue, converted, csvTable, inputAmount, parseCsv, toCents, transactionCsv } from './finance'
+import { accountBalance, amount, baseValue, converted, csvTable, dateBounds, inputAmount, parseCsv, toCents, transactionCsv } from './finance'
 import { useFinance } from './store'
 import { ConfirmDelete, Empty, Field, Modal, Money, Panel, Pill, SectionTitle } from './ui'
 
@@ -89,14 +89,16 @@ export function TransactionsPage({query='',onNew,range='all'}:{query?:string;onN
   const [sort,setSort]=useState<'newest'|'oldest'|'largest'>('newest')
   const visible=useMemo(()=>{
     const q=(query||search).toLowerCase().trim()
+    const [start,end]=dateBounds(range)
     return data.transactions.filter(t=>{
+      if(t.date<start||t.date>end)return false
       if(type!=='all'&&t.type!==type)return false
       if(category!=='all'&&t.category!==category)return false
       if(account!=='all'&&t.accountId!==account&&t.targetAccountId!==account)return false
       if(q && ![t.merchant,t.note,t.category,t.date,t.amount/100,...t.tags].join(' ').toLowerCase().includes(q))return false
       return true
     }).sort((a,b)=>sort==='largest'?b.amount-a.amount:sort==='oldest'?a.date.localeCompare(b.date):b.date.localeCompare(a.date))
-  },[data.transactions,query,search,type,category,account,sort])
+  },[data.transactions,query,search,type,category,account,sort,range])
   const doImport=async()=>{
     setImportError('')
     if (!data.accounts.length) return setImportError('Create an account before importing transactions.')
@@ -192,7 +194,7 @@ export function AccountsPage() {
       <button className="link-btn" onClick={()=>setShowArchived(!showArchived)}>{showArchived?'Hide':'Show'} archived accounts</button>
     </>}
     <p className="hint-banner">Multi-currency totals use the conversion rates in Settings. Accounts without a valid rate are excluded from combined totals, but retain their original balance.</p>
-    {editor!==undefined&&<Modal title={editor?'Edit account':'New account'} onClose={()=>setEditor(undefined)}><form onSubmit={save}><div className="form-grid"><Field label="Account name"><input autoFocus required value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Everyday bank"/></Field><Field label="Account type"><select value={type} onChange={e=>setType(e.target.value as AccountType)}>{types.map(t=><option value={t} key={t}>{pretty(t)}</option>)}</select></Field><Field label="Currency"><select value={currency} onChange={e=>setCurrency(e.target.value)} disabled={!!editor && data.transactions.some(t=>t.accountId===editor.id||t.targetAccountId===editor.id)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></Field><Field label="Opening balance"><input type="number" step=".01" required value={opening} onChange={e=>setOpening(e.target.value)}/></Field><Field label="Group"><input value={group} onChange={e=>setGroup(e.target.value)} placeholder="Personal, Business..."/></Field></div><footer className="form-actions"><button type="button" className="btn btn-ghost" onClick={()=>setEditor(undefined)}>Cancel</button><button className="btn btn-primary">Save account</button></footer></form></Modal>}
+    {editor!==undefined&&<Modal title={editor?'Edit account':'New account'} onClose={()=>setEditor(undefined)}><form onSubmit={save}><div className="form-grid"><Field label="Account name"><input autoFocus required value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Everyday bank"/></Field><Field label="Account type"><select value={type} onChange={e=>setType(e.target.value as AccountType)}>{types.map(t=><option value={t} key={t}>{pretty(t)}</option>)}</select></Field><Field label="Currency"><select value={currency} onChange={e=>setCurrency(e.target.value)} disabled={!!editor && (data.transactions.some(t=>t.accountId===editor.id||t.targetAccountId===editor.id)||data.trades.some(t=>t.accountId===editor.id))}>{currencies.map(c=><option key={c}>{c}</option>)}</select></Field><Field label="Opening balance"><input type="number" step=".01" required value={opening} onChange={e=>setOpening(e.target.value)}/></Field><Field label="Group"><input value={group} onChange={e=>setGroup(e.target.value)} placeholder="Personal, Business..."/></Field></div><footer className="form-actions"><button type="button" className="btn btn-ghost" onClick={()=>setEditor(undefined)}>Cancel</button><button className="btn btn-primary">Save account</button></footer></form></Modal>}
     {reconcile&&<Modal title={'Reconcile '+reconcile.name} subtitle="Creates a traceable balance adjustment instead of rewriting transaction history." onClose={()=>setReconcile(null)}><form onSubmit={submitReconcile}><Field label="Actual account balance"><input required autoFocus type="number" step=".01" value={actual} onChange={e=>setActual(e.target.value)}/></Field><p className="muted text-small">Current recorded balance: {amount(accountBalance(reconcile,data),reconcile.currency)}</p><footer className="form-actions"><button className="btn btn-ghost" type="button" onClick={()=>setReconcile(null)}>Cancel</button><button className="btn btn-primary">Reconcile</button></footer></form></Modal>}
   </div>
 }

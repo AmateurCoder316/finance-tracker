@@ -15,16 +15,21 @@ function location() {
   mkdirSync(folder, { recursive: true })
   return join(folder, 'finance.json')
 }
+function validData(value: unknown): value is FinanceData {
+  if (!value || typeof value !== 'object') return false
+  const d = value as Partial<FinanceData>
+  return d.version === 1 && ['accounts','transactions','budgets','goals','trades','bills','debts','invoices','categories','snapshots'].every(key=>Array.isArray(d[key as keyof FinanceData])) && !!d.settings && typeof d.settings === 'object' && !!d.prices && typeof d.prices === 'object'
+}
 function readData(): FinanceData | null {
   const path = location()
   if (!existsSync(path)) return null
   const value = JSON.parse(readFileSync(path,'utf8'))
-  if (!value || value.version !== 1 || !Array.isArray(value.accounts) || !Array.isArray(value.transactions)) throw new Error('Invalid finance data file')
+  if (!validData(value)) throw new Error('Invalid finance data file')
   latestRevision = Math.max(latestRevision,Number(value.revision) || 0)
   return value as FinanceData
 }
 function writeData(value: FinanceData): boolean {
-  if (!value || value.version !== 1 || !Array.isArray(value.accounts) || !Array.isArray(value.transactions)) return false
+  if (!validData(value)) return false
   if (!Number.isSafeInteger(value.revision) || value.revision < latestRevision) return false
   const body = JSON.stringify(value)
   if (Buffer.byteLength(body,'utf8') > 25_000_000) return false
@@ -69,7 +74,7 @@ function createWindow() {
 }
 function initTray() {
   // 16px single-color icon generated in memory; tray availability varies by desktop.
-  const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg=='
+  const png = 'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAl0lEQVR42mNgGOmAkZCCoMyr/ymxYN10bUayHECpxcQ6hIkeluMzk4keluMzm4leluOyg2mgcwETPX2PzS4WUjSunaaFwg/Ouka9EBjwKBh1wKgDRh0w6oAR6wAWSjSj1w3ogJi6YmhFATVqP5wOINR6pVUDleQ0QO1QYCKlDU+L5jkTqR0JavcNmMjpzVCzYzLgXbNRAABfVDViDk7HSwAAAABJRU5ErkJggg=='
   const image = nativeImage.createFromBuffer(Buffer.from(png,'base64')).resize({width:16,height:16})
   if (image.isEmpty()) return
   try {

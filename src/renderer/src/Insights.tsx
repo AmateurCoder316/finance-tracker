@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Download, FileText, LockKeyhole, Plus, RotateCcw, Settings2, Shield, Trash2, Upload } from 'lucide-react'
 import type { FinanceData, Settings } from './types'
 import { blankData, day, demoData } from './data'
-import { amount, categorySpending, csvTable, dateBounds, incomeExpense, monthSeries, monthlyStats, netWorth, transactionCsv } from './finance'
+import { amount, baseValue, categorySpending, csvTable, dateBounds, incomeExpense, monthSeries, monthlyStats, netWorth, transactionCsv } from './finance'
 import { downloadFile } from './Ledger'
 import { useFinance } from './store'
 import { Empty, Field, Money, Panel, Pill, SectionTitle } from './ui'
@@ -11,9 +11,10 @@ import { Empty, Field, Money, Panel, Pill, SectionTitle } from './ui'
 export function ReportsPage({range}:{range:string}) {
   const {data}=useFinance()
   const [start,setStart]=useState(dateBounds(range)[0]),[end,setEnd]=useState(dateBounds(range)[1])
+  useEffect(()=>{const [s,e]=dateBounds(range);setStart(s);setEnd(e)},[range])
   const income=incomeExpense(data,start,end,'income'),expenses=incomeExpense(data,start,end,'expense')
   const categories=categorySpending(data,start,end),series=monthSeries(data,12)
-  const merchants=Object.entries(data.transactions.filter(t=>t.type==='expense'&&t.status==='posted'&&t.date>=start&&t.date<=end).reduce((s,t)=>({...s,[t.merchant||'Unknown']:(s[t.merchant||'Unknown']||0)+t.amount}),{} as Record<string,number>)).sort((a,b)=>b[1]-a[1]).slice(0,8)
+  const merchants=Object.entries(data.transactions.filter(t=>t.type==='expense'&&t.status==='posted'&&t.date>=start&&t.date<=end).reduce((s,t)=>({...s,[t.merchant||'Unknown']:(s[t.merchant||'Unknown']||0)+baseValue(t.amount,t.accountId,data)}),{} as Record<string,number>)).sort((a,b)=>b[1]-a[1]).slice(0,8)
   const exportReport=()=>{
     const summary=[['Period start',start],['Period end',end],['Income',(income/100).toFixed(2)],['Expenses',(expenses/100).toFixed(2)],['Net cash flow',((income-expenses)/100).toFixed(2)],['Net worth',(netWorth(data)/100).toFixed(2)]]
     const content=csvTable(['Metric','Value'],summary)+'\r\n\r\n'+csvTable(['Category','Expense'],categories.map(c=>[c.name,(c.value/100).toFixed(2)]))
@@ -23,7 +24,7 @@ export function ReportsPage({range}:{range:string}) {
     <div className="report-filters"><Field label="Start date"><input type="date" value={start} onChange={e=>setStart(e.target.value)}/></Field><Field label="End date"><input type="date" min={start} value={end} onChange={e=>setEnd(e.target.value)}/></Field><div className="report-subhead">Financial summary for {start} to {end}</div></div>
     <div className="metrics-grid four"><div className="stat"><span>Total income</span><strong><Money value={income}/></strong></div><div className="stat"><span>Total spending</span><strong><Money value={expenses}/></strong></div><div className="stat"><span>Net cash flow</span><strong className={income>=expenses?'positive':'negative'}><Money value={income-expenses}/></strong></div><div className="stat"><span>Savings rate</span><strong>{income?((income-expenses)/income*100).toFixed(1)+'%':'—'}</strong></div></div>
     <div className="content-two"><Panel title="Income vs. expenses" subtitle="Last 12 calendar months" className="wide-panel"><div className="chart-main"><ResponsiveContainer width="100%" height="100%"><BarChart data={series}><CartesianGrid vertical={false} strokeDasharray="3 5" stroke="var(--chart-grid)"/><XAxis dataKey="name" axisLine={false} tickLine={false}/><YAxis axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?(v/1000)+'k':v}/><Tooltip formatter={v=>amount(Number(v)*100,data.settings.currency)}/><Bar dataKey="income" fill="#576bd4" radius={[4,4,0,0]}/><Bar dataKey="expenses" fill="#9fc4ba" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div></Panel><Panel title="Spending by category">{categories.length?<div className="allocation-list">{categories.slice(0,8).map((c,i)=><div key={c.name} className="allocation-item"><div className="list-head"><span>{c.name}</span><strong><Money value={c.value}/></strong></div><div className="progress"><div className="progress-bar" style={{width:(expenses?c.value/expenses*100:0)+'%',background:['#576bd4','#42ab94','#f2ae71','#9a8ae0'][i%4]}}/></div></div>)}</div>:<Empty title="Nothing to analyze" description="Choose another period or record expenses."/>}</Panel></div>
-    <div className="content-two"><Panel title="Largest merchants">{merchants.length?merchants.map(([name,value],i)=><div className="list-row" key={name}><span className="index-number">{String(i+1).padStart(2,'0')}</span><span className="grow">{name}</span><strong><Money value={value}/></strong></div>):<p className="muted">No expenses in this range.</p>}</Panel><Panel title="Income sources">{Object.entries(data.transactions.filter(t=>t.type==='income'&&t.status==='posted'&&t.date>=start&&t.date<=end).reduce((s,t)=>({...s,[t.merchant||'Other']:(s[t.merchant||'Other']||0)+t.amount}),{} as Record<string,number>)).sort((a,b)=>b[1]-a[1]).map(([source,value])=><div key={source} className="list-row"><span className="grow">{source}</span><strong><Money value={value}/></strong></div>)}{!income&&<p className="muted">No recorded income in this range.</p>}</Panel></div>
+    <div className="content-two"><Panel title="Largest merchants">{merchants.length?merchants.map(([name,value],i)=><div className="list-row" key={name}><span className="index-number">{String(i+1).padStart(2,'0')}</span><span className="grow">{name}</span><strong><Money value={value}/></strong></div>):<p className="muted">No expenses in this range.</p>}</Panel><Panel title="Income sources">{Object.entries(data.transactions.filter(t=>t.type==='income'&&t.status==='posted'&&t.date>=start&&t.date<=end).reduce((s,t)=>({...s,[t.merchant||'Other']:(s[t.merchant||'Other']||0)+baseValue(t.amount,t.accountId,data)}),{} as Record<string,number>)).sort((a,b)=>b[1]-a[1]).map(([source,value])=><div key={source} className="list-row"><span className="grow">{source}</span><strong><Money value={value}/></strong></div>)}{!income&&<p className="muted">No recorded income in this range.</p>}</Panel></div>
     <Panel title="Accounting notes"><p className="muted">Reports use completed transactions in each account's currency, converted with your manually configured rates. Transfers, balance adjustments, trades and principal repayments are excluded from income/expense totals. Investment valuation changes are included in net worth, not cash flow.</p></Panel>
   </div>
 }
@@ -33,8 +34,8 @@ export function TaxesPage() {
   const [year,setYear]=useState(new Date().getFullYear())
   const [rate,setRate]=useState(String(data.settings.taxRate))
   const transactions=data.transactions.filter(t=>t.date.startsWith(String(year))&&t.status==='posted')
-  const taxable=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)
-  const deductible=transactions.filter(t=>t.type==='expense'&&t.tags.includes('deductible')).reduce((s,t)=>s+t.amount,0)
+  const taxable=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+baseValue(t.amount,t.accountId,data),0)
+  const deductible=transactions.filter(t=>t.type==='expense'&&t.tags.includes('deductible')).reduce((s,t)=>s+baseValue(t.amount,t.accountId,data),0)
   const estimated=Math.max(0,taxable-deductible)*data.settings.taxRate/100
   return <div className="page-stack"><SectionTitle title="Tax organizer" detail="Collect records and run a simple estimate — not an official tax calculation."/>
     <div className="report-filters"><Field label="Tax year"><select value={year} onChange={e=>setYear(Number(e.target.value))}>{Array.from({length:7},(_,i)=>new Date().getFullYear()-i).map(y=><option key={y}>{y}</option>)}</select></Field><Field label="Assumed flat tax rate (%)"><input type="number" min="0" max="100" step=".1" value={rate} onChange={e=>setRate(e.target.value)} onBlur={()=>mutate(d=>({...d,settings:{...d.settings,taxRate:Math.min(100,Math.max(0,Number(rate)||0))}}))}/></Field><button className="btn btn-ghost" onClick={()=>{mutate(d=>({...d,settings:{...d.settings,taxRate:Math.min(100,Math.max(0,Number(rate)||0))}}))}}>Apply rate</button></div>

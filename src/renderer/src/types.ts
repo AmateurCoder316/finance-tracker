@@ -32,7 +32,7 @@ export interface MarketPrice { price: number; currency: string; updatedAt: strin
 export interface Bill {
   id: string; name: string; amount: number; nextDate: string; interval: 'weekly' | 'monthly' | 'yearly' | 'once'
   category: string; accountId: string; status: 'active' | 'cancelled'
-  payments: string[]; trialEnds?: string; note?: string
+  payments: string[]; dueDay?: number; trialEnds?: string; note?: string
 }
 export interface Debt {
   id: string; name: string; principal: number; apr: number; payment: number

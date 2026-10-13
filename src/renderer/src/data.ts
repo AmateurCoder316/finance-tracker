@@ -1,7 +1,7 @@
 import type { FinanceData } from './types'
 
 export const uid = () => crypto.randomUUID()
-export const day = () => new Date().toISOString().slice(0, 10)
+export const day = () => { const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0') }
 export const DEFAULT_CATEGORIES = ['Housing', 'Food & groceries', 'Restaurants', 'Shopping', 'Transport', 'Health', 'Entertainment', 'Education', 'Utilities', 'Subscriptions', 'Travel', 'Insurance', 'Taxes', 'Business', 'Salary', 'Freelance', 'Investment income', 'Gifts', 'Other']
 
 export function blankData(): FinanceData {

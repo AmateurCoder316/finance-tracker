@@ -151,7 +151,7 @@ export function monthlyStats(d: FinanceData) {
     savingsRate:income ? (income-expenses)/income*100 : 0,
     previousIncome:incomeExpense(d,ps,pe,'income'),previousExpenses:incomeExpense(d,ps,pe,'expense') }
 }
-export function nextBillDate(iso: string, interval: 'weekly'|'monthly'|'yearly'|'once'): string {
+export function nextBillDate(iso: string, interval: 'weekly'|'monthly'|'yearly'|'once', anchorDay?: number): string {
   if (interval === 'once') return iso
   const [y,m,dayNum] = iso.split('-').map(Number)
   const date = new Date(Date.UTC(y,m-1,dayNum))
@@ -160,7 +160,7 @@ export function nextBillDate(iso: string, interval: 'weekly'|'monthly'|'yearly'|
     const newMonth = m - 1 + (interval === 'monthly' ? 1 : 12)
     const first = new Date(Date.UTC(y,newMonth,1))
     const lastDay = new Date(Date.UTC(y,newMonth+1,0)).getUTCDate()
-    first.setUTCDate(Math.min(dayNum,lastDay))
+    first.setUTCDate(Math.min(anchorDay || dayNum,lastDay))
     return first.toISOString().slice(0,10)
   }
   return date.toISOString().slice(0,10)
