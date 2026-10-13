@@ -47,6 +47,7 @@ describe('double-sided personal ledger',()=>{
   it('advances end-of-month dates correctly',()=>{
     expect(nextBillDate('2026-01-31','monthly')).toBe('2026-02-28')
     expect(nextBillDate('2024-01-31','monthly')).toBe('2024-02-29')
+    expect(nextBillDate('2026-02-28','monthly',31)).toBe('2026-03-31')
   })
   it('detects unpayable interest and otherwise returns finite repayment',()=>{
     expect(amortization(100000,12,500).months).toBe(Infinity)

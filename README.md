@@ -1,6 +1,6 @@
 # Ledger — Finance Tracker
 
-Ledger is an offline-first **Electron + React + TypeScript** desktop financial workspace. The repository's \`SKILL.md\` informs the UI: clear hierarchy, responsive surfaces, restrained transitions and reduced-motion support.
+Ledger is an offline-first **Electron + React + TypeScript** desktop financial workspace. The repository's `SKILL.md` informs the UI: clear hierarchy, responsive surfaces, restrained transitions and reduced-motion support.
 
 > **Status: v0.1, functional foundation.** The original feature wishlist covers hundreds of capabilities. This release intentionally implements a usable core, not a fully certified banking, investing, invoicing or tax system.
 
@@ -8,25 +8,25 @@ Ledger is an offline-first **Electron + React + TypeScript** desktop financial w
 
 Requires Node.js 22+, npm, and a desktop environment.
 
-\`\`\`bash
+```bash
 npm install
 npm run dev
-\`\`\`
+```
 
 Compile and check:
 
-\`\`\`bash
+```bash
 npm test
 npm run build
-\`\`\`
+```
 
 Package on your corresponding OS:
 
-\`\`\`bash
+```bash
 npm run dist:linux   # AppImage and .deb, on Linux
 npm run dist:win     # NSIS .exe, on Windows
 npm run dist:mac     # .dmg, on macOS
-\`\`\`
+```
 
 Packaging across platforms needs the relevant build tools and code signing for public distribution. The build command uses Electron Vite; no cloud server or API keys are required.
 
@@ -49,7 +49,7 @@ Packaging across platforms needs the relevant build tools and code signing for p
 
 ## Important financial and privacy limitations
 
-- **Data is stored unencrypted** in \`app.getPath('userData')/finance.json\`, owned by the logged-in OS user. Backup JSON and exported CSV are also plaintext. Do not store account credentials or secret recovery phrases in Ledger. Use full-disk encryption, OS account protection, and securely stored backups.
+- **Data is stored unencrypted** in `app.getPath('userData')/finance.json`, owned by the logged-in OS user. Backup JSON and exported CSV are also plaintext. Do not store account credentials or secret recovery phrases in Ledger. Use full-disk encryption, OS account protection, and securely stored backups.
 - No bank connection, OAuth, account sync, live stock/crypto prices, news feed or streaming FX feed is implemented. Prices and FX rates are **manual**; values are not live.
 - Pending transactions do not affect posted balances. Transfers do not count as income/expense. Trading buys/sells change cash plus investment holdings; principal repayments change cash and liabilities separately.
 - Budgets, reported income and totals use your **base currency**. Set rates for any non-base account currencies. Accounts without rates are excluded from aggregate totals, not converted at a fictional rate.
@@ -62,9 +62,9 @@ Packaging across platforms needs the relevant build tools and code signing for p
 
 ## Interface shortcuts
 
-- \`Ctrl/Cmd + K\`: focus transaction search
-- \`Ctrl/Cmd + N\`: new transaction
-- \`Escape\`: dismiss dialogs
+- `Ctrl/Cmd + K`: focus transaction search
+- `Ctrl/Cmd + N`: new transaction
+- `Escape`: dismiss dialogs
 - Tray menu: open Ledger, quick transaction, or quit (on supported desktop environments)
 
 ## Try it out
@@ -73,7 +73,7 @@ Ledger starts with no real accounts. Select **Explore demo data** to try the UI 
 
 ## Development notes
 
-The application has no backend service. Data types and financial calculations are in \`src/renderer/src/types.ts\` and \`finance.ts\`; the renderer's store lives in \`store.tsx\`. Electron's main process owns local files and OS dialogs, exposed via a narrow preload IPC bridge. \`SKILL.md\` remains the design source of truth.
+The application has no backend service. Data types and financial calculations are in `src/renderer/src/types.ts` and `finance.ts`; the renderer's store lives in `store.tsx`. Electron's main process owns local files and OS dialogs, exposed via a narrow preload IPC bridge. `SKILL.md` remains the design source of truth.
 
 ### Next engineering milestones
 
