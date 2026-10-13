@@ -1,0 +1,45 @@
+{
+  "name": "finance-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./out/main/index.js",
+  "description": "A private, offline-first desktop finance workspace",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "tsc --noEmit && electron-vite build",
+    "preview": "electron-vite preview",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb",
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:mac": "npm run build && electron-builder --mac dmg",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^3.1.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.0"
+  },
+  "build": {
+    "appId": "fi.harbourlabs.finance-tracker",
+    "productName": "Ledger",
+    "directories": {"output": "release"},
+    "files": ["out/**/*", "package.json"],
+    "asar": true,
+    "linux": {"target": ["AppImage", "deb"], "category": "Finance"},
+    "win": {"target": ["nsis"]},
+    "mac": {"target": ["dmg"], "category": "public.app-category.finance"}
+  }
+}
