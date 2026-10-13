@@ -15,6 +15,7 @@ const Context = createContext<ContextValue | null>(null)
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<FinanceData>(blankData)
   const [ready, setReady] = useState(false)
+  const [safeToSave, setSafeToSave] = useState(false)
   const [error, setError] = useState('')
   const queue = useRef<Promise<unknown>>(Promise.resolve())
   useEffect(() => {
@@ -22,7 +23,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     const run = async () => {
       try {
         const loaded = window.finance ? await window.finance.load() : JSON.parse(localStorage.getItem('ledger-v1') || 'null')
-        if (active && loaded?.version === 1 && Array.isArray(loaded.accounts) && Array.isArray(loaded.transactions)) setData(loaded)
+        if (loaded && (loaded.version !== 1 || !Array.isArray(loaded.accounts) || !Array.isArray(loaded.transactions))) throw new Error('Invalid data format')
+        if (active) { if (loaded) setData(loaded); setSafeToSave(true) }
       } catch (e) { if (active) setError('Could not read saved data. No changes have been written.') }
       finally { if (active) setReady(true) }
     }
@@ -30,7 +32,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return () => { active = false }
   }, [])
   useEffect(() => {
-    if (!ready) return
+    if (!ready || !safeToSave) return
     if (window.finance) {
       queue.current = queue.current.then(() => window.finance!.save(data)).then(ok => {
         if (!ok) setError('Could not save changes to disk. Check available storage.')
@@ -40,7 +42,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       try { localStorage.setItem('ledger-v1',JSON.stringify(data)) }
       catch { setError('Browser storage is full.') }
     }
-  }, [data,ready])
+  }, [data,ready,safeToSave])
   useEffect(() => {
     document.documentElement.dataset.theme = data.settings.theme
     document.documentElement.style.setProperty('--accent',data.settings.accent)
