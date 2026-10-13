@@ -67,7 +67,7 @@ export function TransactionForm({onClose,initial}:{onClose:()=>void;initial?:Tra
           {target && source?.currency!==target.currency&&<Field label={'Received in '+target.currency}><input type="number" required min=".01" step=".01" value={targetAmount} onChange={e=>setTargetAmount(e.target.value)} /></Field>}</>}
         {type!=='transfer'&&<><Field label="Category"><select value={category} onChange={e=>setCategory(e.target.value)}>{data.categories.map(c=><option key={c}>{c}</option>)}</select></Field><Field label={type==='income'?'Payer / source':'Merchant / payee'}><input value={merchant} onChange={e=>setMerchant(e.target.value)} placeholder={type==='income'?'Employer or client':'Store or recipient'} /></Field></>}
         <Field label="Date"><input type="date" required value={date} onChange={e=>setDate(e.target.value)}/></Field>
-        <Field label="Status"><select value={status} onChange={e=>setStatus(e.target.value)}><option value="posted">Completed</option><option value="pending">Pending (excluded from balances)</option></select></Field>
+        <Field label="Status"><select value={status} onChange={e=>setStatus(e.target.value as 'posted'|'pending')}><option value="posted">Completed</option><option value="pending">Pending (excluded from balances)</option></select></Field>
         <Field label="Payment method"><input value={method} onChange={e=>setMethod(e.target.value)} placeholder="Card, cash, bank transfer"/></Field>
         <Field label="Tags"><input value={tags} onChange={e=>setTags(e.target.value)} placeholder="travel, deductible"/></Field>
       </div>
@@ -144,7 +144,7 @@ export function TransactionsPage({query='',onNew,range='all'}:{query?:string;onN
         <select aria-label="Transaction type" value={type} onChange={e=>setType(e.target.value)}><option value="all">All types</option><option value="expense">Expenses</option><option value="income">Income</option><option value="transfer">Transfers</option><option value="adjustment">Adjustments</option></select>
         <select aria-label="Category" value={category} onChange={e=>setCategory(e.target.value)}><option value="all">All categories</option>{data.categories.map(c=><option key={c}>{c}</option>)}</select>
         <select aria-label="Account" value={account} onChange={e=>setAccount(e.target.value)}><option value="all">All accounts</option>{data.accounts.map(a=><option value={a.id} key={a.id}>{a.name}</option>)}</select>
-        <select aria-label="Sort" value={sort} onChange={e=>setSort(e.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="largest">Largest first</option></select>
+        <select aria-label="Sort" value={sort} onChange={e=>setSort(e.target.value as 'newest'|'oldest'|'largest')}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="largest">Largest first</option></select>
       </div>
       {!visible.length?<Empty title="No transactions found" description={data.transactions.length?'Try adjusting your filters.':'Add your first transaction to start tracking cash flow.'} action={!data.transactions.length?onNew:undefined} label="Add transaction"/>:
       <div className="table-scroll"><table className="data-table"><thead><tr><th>Transaction</th><th>Category</th><th>Account</th><th>Date</th><th>Status</th><th className="align-right">Amount</th><th></th></tr></thead><tbody>
